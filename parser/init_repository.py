@@ -21,3 +21,5 @@ def save_info(repository: JsonRepository):
 if __name__ == '__main__':
     repository = init_repository('wiki_december.json')
     save_info(repository)
+
+

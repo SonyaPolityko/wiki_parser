@@ -35,7 +35,8 @@ def main_html():
     return src
 
 
-def get_list_href():
+def get_list_href() -> list[str]:
+    """Возвращает список относительных ссылок"""
     src = main_html()
 
     list_href = []
@@ -55,7 +56,8 @@ def get_list_href():
     return list_href
 
 
-def get_full_url(href: str):
+def get_full_url(href: str) -> str:
+    """Собирает полный URL"""
     if "action=edit&redlink=1" in href:
         raise PageNotExistsError
     full_url = urljoin(URL, href)
@@ -63,7 +65,7 @@ def get_full_url(href: str):
 
 
 def get_ru_url(text: str) -> str:
-    """Возвращаем ссылку на страницу на русском или указанную в списке исходной страницы"""
+    """Возвращает ссылку на страницу на русском или указанную в списке исходной страницы"""
     soup = BeautifulSoup(text, "lxml")
     try:
         ru_url = soup.find("a", class_="interlanguage-link-target", lang="ru").get(
@@ -74,7 +76,8 @@ def get_ru_url(text: str) -> str:
         return full_url
 
 
-def get_name(url: str):
+def get_name(url: str) -> str:
+    """Извлекает имя из URL Wikipedia."""
     pattern = r"/wiki/([^/&\?#]+)"
     match = re.search(pattern, url)
     if match:
@@ -121,7 +124,7 @@ def clean_wikipedia_text(text: str) -> str:
     return text
 
 
-def remove_accents(text: str):
+def remove_accents(text: str) -> str:
     """Удаление ударения"""
     nfkd_form = unicodedata.normalize("NFKD", text)
     cleaned = "".join([c for c in nfkd_form if ord(c) != 769])
@@ -129,6 +132,7 @@ def remove_accents(text: str):
 
 
 def get_person(url: str) -> Person:
+    """Возвращает словарь {name: name}"""
     name = get_name(url)
     person = {
         "name": name,
