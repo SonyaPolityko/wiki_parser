@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-from config import HEADERS, URL, NAME_DOES_NOT_EXIST
+from config import HEADERS, NAME_DOES_NOT_EXIST, URL
 from exceptions import PageNotExistsError, WikiServiceError
 from typedefs import Person
 
@@ -57,7 +57,7 @@ def get_full_url(href: str) -> str:
     return full_url
 
 
-def get_ru_url(text: str) -> str:
+def get_ru_url(text: str, original_url: str) -> str:
     """Возвращает ссылку на страницу на русском или указанную в списке исходной страницы"""
     soup = BeautifulSoup(text, "lxml")
     try:
@@ -66,7 +66,7 @@ def get_ru_url(text: str) -> str:
         )
         return ru_url
     except AttributeError:
-        return full_url
+        return original_url
 
 
 def get_name(url: str) -> str:
@@ -91,20 +91,20 @@ def get_paragraph(text: str) -> str:
         paragraph = (
             soup.find("table", class_=re.compile("infobox"))
             .find_next_sibling("p")
-            .get_text(strip=True)
+            .get_text()
         )
         if not paragraph:
             paragraph = (
                 soup.find("table", class_=re.compile("infobox"))
                 .find_next_sibling("p")
                 .find_next_sibling("p")
-                .get_text(strip=True)
+                .get_text()
             )
     except AttributeError:
         paragraph = (
             soup.find("div", class_="mw-content-ltr mw-parser-output")
             .find("p")
-            .get_text(strip=True)
+            .get_text()
         )
     return clean_wikipedia_text(paragraph)
 
@@ -112,8 +112,10 @@ def get_paragraph(text: str) -> str:
 def clean_wikipedia_text(text: str) -> str:
     """Очистка текста из Википедии от ссылок и спецсимволов"""
     text = re.sub(r"\[\d+\]", "", text)  # все скобочные ссылки [n]
-    text = re.sub(r"\s+", " ", text).strip()  # лишние пробелы
     text = remove_accents(text)
+    # апострофы оставлены, так как, например, существуют английские имена, которые пишутся с ними
+    # text = re.sub(r"\'+", '', text) # можно включить, если не нужны апострофы
+    text = re.sub(r"\s+", " ", text).strip()  # лишние пробелы
     return text
 
 
@@ -135,12 +137,12 @@ def get_person(url: str) -> Person:
 
 if __name__ == "__main__":
     list_href = get_list_href()
-    for i in range(10):
+    for i in range(5, 12):
         time.sleep(1)
         try:
-            full_url = get_full_url(list_href[i])
-            text = get_text_response(full_url)
-            url = get_ru_url(text)
+            url = get_full_url(list_href[i])
+            text = get_text_response(url)
+            url = get_ru_url(text, url)
             print(url)
             text_1 = get_text_response(url)
             paragraph = get_paragraph(text_1)

@@ -5,3 +5,5 @@ HEADERS = {
     "Accept-Encoding": "gzip",
 }
 NAME_DOES_NOT_EXIST = "Нет имени"
+
+SMTP_YA_HOST = 'smtp.yandex.ru'
