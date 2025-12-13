@@ -58,6 +58,11 @@ def get_ru_url(text: str) -> str:
     except AttributeError:
         return full_url
 
+def get_name(url:str):
+    name = url.replace('/wiki/', '').strip()
+    return name
+
+
 
 def get_text_response(url: str) -> str:
     """Получаем HTML от сервера. При ответе != 200 возбуждается исключение WikiServiceError
@@ -78,9 +83,15 @@ def get_paragraph(text: str) -> str:
     return paragraph
 
 
+def get_person(url: str) -> dict:
+    name = get_name(url)
+    person = {
+        'name': name,
+    }
+    return person
+
 
 if __name__=="__main__":
-    get_list_href()
     text = get_text_response(full_url)
     url = get_ru_url(text)
     print(url)
