@@ -1,37 +1,13 @@
 import re
 import time
+import unicodedata
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 from config import URL
-from exceptions import WikiServiceError
-
-with open("Deaths_in_August_2023.html", "r") as file:
-    src = file.read()
-
-
-def get_list_href():
-    list_href = []
-    soup_1 = BeautifulSoup(src, "lxml")
-    all_div = soup_1.find_all("div", class_="mw-heading mw-heading3")
-    for div in all_div:
-        ul = div.find_next_sibling("ul")
-        li = ul.find_all("li")
-
-    list_li = [
-        li for div in all_div for li in div.find_next_sibling("ul").find_all("li")
-    ]  # получение всех элементов li
-
-    for li in list_li:
-        href = li.find("a").get("href")
-        list_href.append(href)
-    return list_href
-
-
-list_href = get_list_href()
-en_url = URL + list_href[-1]
-full_url = urljoin(URL, list_href[-1])
+from exceptions import PageNotExistsError, WikiServiceError
+from typedefs import Person
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -40,8 +16,50 @@ headers = {
 }
 
 
-res = requests.get(en_url, headers=headers)
-print(res.status_code)
+
+def get_text_response(url: str) -> str:
+    """Получаем HTML от сервера. При ответе != 200 возбуждается исключение WikiServiceError
+
+    Returns: строка вида html
+    """
+    # time.sleep(1)
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise WikiServiceError
+    return response.text
+
+
+def main_html():
+    full_url = urljoin(URL, "wiki/Deaths_in_2025")
+    src = get_text_response(full_url)
+    return src
+
+
+def get_list_href():
+    src = main_html()
+
+    list_href = []
+    soup = BeautifulSoup(src, "lxml")
+    all_div = soup.find_all("div", class_="mw-heading mw-heading3")
+
+    list_li = [
+        li for div in all_div for li in div.find_next_sibling("ul").find_all("li")
+    ]  # получение всех элементов li
+
+    for li in list_li:
+        href = li.find("a").get("href")
+        if href in list_href:
+            continue
+        list_href.append(href)
+
+    return list_href
+
+
+def get_full_url(href: str):
+    if "action=edit&redlink=1" in href:
+        raise PageNotExistsError
+    full_url = urljoin(URL, href)
+    return full_url
 
 
 def get_ru_url(text: str) -> str:
@@ -57,32 +75,60 @@ def get_ru_url(text: str) -> str:
 
 
 def get_name(url: str):
-    name = url.replace("/wiki/", "").strip()
-    return name
+    pattern = r"/wiki/([^/&\?#]+)"
+    match = re.search(pattern, url)
+    if match:
+        return match.group(1)
 
+    pattern2 = r"title=([^&]+)"
+    match = re.search(pattern2, url)
+    if match:
+        return match.group(1)
 
-def get_text_response(url: str) -> str:
-    """Получаем HTML от сервера. При ответе != 200 возбуждается исключение WikiServiceError
-
-    Returns: строка вида html
-    """
-    time.sleep(1)
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        raise WikiServiceError
-    return response.text
+    return "Нет имени"
 
 
 def get_paragraph(text: str) -> str:
     """Получаем первый параграф"""
     soup = BeautifulSoup(text, "lxml")
-    paragraph = (
-        soup.find("table", class_=re.compile("infobox")).find_next_sibling("p").text
-    )
-    return paragraph
+    try:
+        paragraph = (
+            soup.find("table", class_=re.compile("infobox"))
+            .find_next_sibling("p")
+            .get_text(strip=True)
+        )
+        if not paragraph:
+            paragraph = (
+                soup.find("table", class_=re.compile("infobox"))
+                .find_next_sibling("p")
+                .find_next_sibling("p")
+                .get_text(strip=True)
+        )
+    except AttributeError:
+            paragraph = (
+                soup.find("div", class_="mw-content-ltr mw-parser-output")
+                .find("p")
+                .get_text(strip=True)
+            )
+    return clean_wikipedia_text(paragraph)
 
 
-def get_person(url: str) -> dict:
+def clean_wikipedia_text(text: str) -> str:
+    """Очистка текста из Википедии от ссылок и спецсимволов"""
+    text = re.sub(r"\[\d+\]", "", text)  # все скобочные ссылки [n]
+    text = re.sub(r"\s+", " ", text).strip()  # лишние пробелы
+    text = remove_accents(text)
+    return text
+
+
+def remove_accents(text: str):
+    """Удаление ударения"""
+    nfkd_form = unicodedata.normalize("NFKD", text)
+    cleaned = "".join([c for c in nfkd_form if ord(c) != 769])
+    return unicodedata.normalize("NFKC", cleaned)
+
+
+def get_person(url: str) -> Person:
     name = get_name(url)
     person = {
         "name": name,
@@ -91,9 +137,17 @@ def get_person(url: str) -> dict:
 
 
 if __name__ == "__main__":
-    text = get_text_response(full_url)
-    url = get_ru_url(text)
-    print(url)
-    text_1 = get_text_response(url)
-    paragraph = get_paragraph(text_1)
-    print(paragraph)
+    list_href = get_list_href()
+    for i in range(10):
+        time.sleep(1)
+        try:
+            full_url = get_full_url(list_href[i])
+
+            text = get_text_response(full_url)
+            url = get_ru_url(text)
+            print(url)
+            text_1 = get_text_response(url)
+            paragraph = get_paragraph(text_1)
+            print(paragraph)
+        except PageNotExistsError:
+            print("Страница не существует!")
