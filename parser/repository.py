@@ -2,7 +2,9 @@ import json
 from abc import ABC, abstractmethod
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typedefs import en_URL, Person, People
+
+from exceptions import PersonExists
+from typedefs import People, Person, en_URL
 
 
 class Repository(ABC):
@@ -15,9 +17,6 @@ class Repository(ABC):
     def _save(self) -> None:
         """Сохранение состояния"""
         ...
-
-
-class PersonExists(Exception): ...
 
 
 class JsonRepository(Repository):

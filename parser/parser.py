@@ -1,18 +1,15 @@
 import re
 import time
 from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
 from config import URL
+from exceptions import WikiServiceError
 
 with open("Deaths_in_August_2023.html", "r") as file:
     src = file.read()
 
-
-class WikiServiceError(Exception):
-    """Ответ сервера, отличный от 200"""
-
-    ...
 
 def get_list_href():
     list_href = []
@@ -58,10 +55,10 @@ def get_ru_url(text: str) -> str:
     except AttributeError:
         return full_url
 
-def get_name(url:str):
-    name = url.replace('/wiki/', '').strip()
-    return name
 
+def get_name(url: str):
+    name = url.replace("/wiki/", "").strip()
+    return name
 
 
 def get_text_response(url: str) -> str:
@@ -79,19 +76,21 @@ def get_text_response(url: str) -> str:
 def get_paragraph(text: str) -> str:
     """Получаем первый параграф"""
     soup = BeautifulSoup(text, "lxml")
-    paragraph = soup.find("table", class_=re.compile("infobox")).find_next_sibling("p").text
+    paragraph = (
+        soup.find("table", class_=re.compile("infobox")).find_next_sibling("p").text
+    )
     return paragraph
 
 
 def get_person(url: str) -> dict:
     name = get_name(url)
     person = {
-        'name': name,
+        "name": name,
     }
     return person
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     text = get_text_response(full_url)
     url = get_ru_url(text)
     print(url)
