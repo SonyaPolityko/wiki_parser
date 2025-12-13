@@ -5,15 +5,9 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-from config import URL
+from config import HEADERS, URL, NAME_DOES_NOT_EXIST
 from exceptions import PageNotExistsError, WikiServiceError
 from typedefs import Person
-
-headers = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0",
-    "Accept-Encoding": "gzip",
-}
 
 
 def get_text_response(url: str) -> str:
@@ -22,7 +16,7 @@ def get_text_response(url: str) -> str:
     Returns: строка вида html
     """
     # time.sleep(1)
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=HEADERS)
     if response.status_code != 200:
         raise WikiServiceError
     return response.text
@@ -87,7 +81,7 @@ def get_name(url: str) -> str:
     if match:
         return match.group(1)
 
-    return "Нет имени"
+    return NAME_DOES_NOT_EXIST
 
 
 def get_paragraph(text: str) -> str:
