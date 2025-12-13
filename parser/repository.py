@@ -35,7 +35,7 @@ class JsonRepository(Repository):
                 return {}
 
     def _check_person_exists(self, en_url: en_URL) -> bool:
-        """Выкидывается исключение PersonExists, если ссылка уже существует"""
+        """Возвращается True, если ссылка уже существует, иначе False"""
         if en_url in self._people:
             return True
         return False
@@ -47,11 +47,10 @@ class JsonRepository(Repository):
         self._people[en_url] = people_info
         self._save()
 
-
     def get_person_url(self, en_url: en_URL):
         if self._check_person_exists(en_url):
             return en_url
-        raise PersonNotExists('Человека нет в списке!')
+        raise PersonNotExists("Человека нет в списке!")
 
     def _save(self):
         with open(self._filename, "w", encoding="utf-8") as f:

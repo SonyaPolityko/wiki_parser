@@ -16,7 +16,6 @@ headers = {
 }
 
 
-
 def get_text_response(url: str) -> str:
     """Получаем HTML от сервера. При ответе != 200 возбуждается исключение WikiServiceError
 
@@ -106,13 +105,13 @@ def get_paragraph(text: str) -> str:
                 .find_next_sibling("p")
                 .find_next_sibling("p")
                 .get_text(strip=True)
-        )
-    except AttributeError:
-            paragraph = (
-                soup.find("div", class_="mw-content-ltr mw-parser-output")
-                .find("p")
-                .get_text(strip=True)
             )
+    except AttributeError:
+        paragraph = (
+            soup.find("div", class_="mw-content-ltr mw-parser-output")
+            .find("p")
+            .get_text(strip=True)
+        )
     return clean_wikipedia_text(paragraph)
 
 
@@ -146,7 +145,6 @@ if __name__ == "__main__":
         time.sleep(1)
         try:
             full_url = get_full_url(list_href[i])
-
             text = get_text_response(full_url)
             url = get_ru_url(text)
             print(url)

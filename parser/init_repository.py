@@ -1,4 +1,5 @@
 from repository import JsonRepository
+
 import parser
 
 
@@ -17,9 +18,6 @@ def save_info(repository: JsonRepository):
         repository.add_person_info(href, name)
 
 
-
-if __name__ == '__main__':
-    repository = init_repository('wiki_december.json')
+if __name__ == "__main__":
+    repository = init_repository("wiki_december.json")
     save_info(repository)
-
-
