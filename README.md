@@ -15,7 +15,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### 2. Клонирование и установка зависимостей
 ``` bash
 git clone https://github.com/SonyaPolityko/wiki_parser.git
-cd wiki-deaths-monitor
+cd wiki_parser
 uv sync
 ```
 ### 3. Настройка окружения
