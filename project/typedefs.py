@@ -1,7 +1,9 @@
 from typing import TypedDict
 
+
 class Person(TypedDict):
     name: str
 
-type en_URL = str
-type People = dict[en_URL, Person]
+
+type EN_URL = str
+type People = dict[EN_URL, Person]
