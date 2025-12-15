@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 
-from project.config import JSON_NAME, NAME_PID
+from project.config import INIT_REPO, JSON_NAME, NAME_PID
 from project.daemon import WikiMonitorDaemon
 from project.logger_config import setup_logging
 
@@ -9,10 +9,9 @@ setup_logging()
 
 
 def run():
-    daemon = WikiMonitorDaemon(NAME_PID, JSON_NAME, True)
+    daemon = WikiMonitorDaemon(NAME_PID, JSON_NAME, INIT_REPO)
     if len(sys.argv) == 2:
         if sys.argv[1] == "start":
-            daemon.init_repository()
             daemon.start()
         elif sys.argv[1] == "stop":
             daemon.stop()

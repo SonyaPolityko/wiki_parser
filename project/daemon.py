@@ -101,7 +101,7 @@ class Daemon:
             return
 
         self.kill_pid(pid)
-        logger.info('Демон остановлен')
+        logger.info("Демон остановлен")
 
     def kill_pid(self, pid: int):
         """Убиваем процесс"""
@@ -135,7 +135,7 @@ class WikiMonitorDaemon(Daemon):
         if self.is_init:  # инициализируем хранилище данными без отравки уведомлений
             self._save_all_people()
         else:
-            logger.info('Начальная инициализация не установлена')
+            logger.info("Начальная инициализация не установлена")
 
     def _save_all_people(self):
         """Сохранение всех валидных ссылок в json"""
@@ -215,6 +215,7 @@ class WikiMonitorDaemon(Daemon):
     def run(self):
         """Запуск логики"""
         logger.info("Демон запущен")
+        self.init_repository()
         while True:
             self.process()
             time.sleep(CHECK_INTERVAL)
