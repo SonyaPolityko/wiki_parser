@@ -37,6 +37,8 @@ class WikiDataInitializer:
         list_href = get_list_href()
 
         for href in list_href:
+            if "redlink=1" in href:
+                continue
             name = get_person(href)
             self.repository.add_person_info(href, name)
 

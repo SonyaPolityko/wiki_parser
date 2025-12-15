@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .config import HEADERS, NAME_DOES_NOT_EXIST, PAGE_PATH, TIMEOUT, URL
-from .exceptions import PageNotExistsError, WikiServiceError
+from .exceptions import PageNotExistsError, ParsingError, WikiServiceError
 from .text_processing import clean_wikipedia_text
 from .typedefs import Person
 
@@ -16,10 +16,11 @@ def get_text_response(url: str) -> str:
     """Получаем HTML от сервера. При ответе != 200 возбуждается исключение WikiServiceError
     Returns: строка вида html
     """
-    response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-    if response.status_code != 200:
-        raise WikiServiceError
-    return response.text
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        return response.text
+    except requests.exceptions.ConnectionError:
+        raise WikiServiceError  # noqa: B904
 
 
 def main_html():
@@ -30,15 +31,18 @@ def main_html():
 
 def get_list_href() -> Generator[str]:
     """Возвращает генератор относительных ссылок"""
-    src = main_html()
+    try:
+        src = main_html()
 
-    soup = BeautifulSoup(src, "lxml")
-    all_div = soup.find_all("div", class_="mw-heading mw-heading3")
-    gen_li = (
-        li for div in all_div for li in div.find_next_sibling("ul").find_all("li")
-    )  # получение генератора всех элементов li
-    gen_href = (str(li.find("a").get("href")) for li in gen_li)  # генератор ссылок
-    return gen_href
+        soup = BeautifulSoup(src, "lxml")
+        all_div = soup.find_all("div", class_="mw-heading mw-heading3")
+        gen_li = (
+            li for div in all_div for li in div.find_next_sibling("ul").find_all("li")
+        )  # получение генератора всех элементов li
+        gen_href = (str(li.find("a").get("href")) for li in gen_li)  # генератор ссылок
+        return gen_href
+    except AttributeError:
+        raise ParsingError('Ошибка при парсинге ссылок')  # noqa: B904
 
 
 def get_full_url(href: str) -> str:

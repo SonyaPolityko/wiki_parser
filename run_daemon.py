@@ -9,7 +9,7 @@ setup_logging()
 
 
 def run():
-    daemon = WikiMonitorDaemon(NAME_PID, JSON_NAME, False)
+    daemon = WikiMonitorDaemon(NAME_PID, JSON_NAME, True)
     if len(sys.argv) == 2:
         if sys.argv[1] == "start":
             daemon.start()

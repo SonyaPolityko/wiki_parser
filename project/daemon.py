@@ -129,13 +129,24 @@ class WikiMonitorDaemon(Daemon):
         os.makedirs(os.path.dirname(json_path), exist_ok=True)
         self.repo = WikiDataInitializer(JsonRepository(json_path))
         if is_init:
+            self._save_all_people()
+
+    def _save_all_people(self):
+        try:
             self.repo.save_info()
+        except Exception as err:
+            logger.error(f"{err}")
 
     def check_new_people(self):
         logger.info("Проверка...")
-        current_hrefs = get_list_href()
+        try:
+            current_hrefs = get_list_href()
+            logger.info("Список ссылок получен")
+        except (ParsingError, WikiServiceError):
+            logger.error("Ошибка при сохранении ссылок")
+            return
         for href in current_hrefs:
-            time.sleep(1)
+            time.sleep(2)
             if self.repo.check_person_exists(href):
                 continue  # переходим к следующему человеку
             logger.info(f"Новый: {href}")
@@ -143,8 +154,8 @@ class WikiMonitorDaemon(Daemon):
                 # Получаем url
                 original_url = get_full_url(href)
                 logger.info(f"Получили {original_url=}")
-            except PageNotExistsError as err:
-                logger.error(f"{err}. Переход к следующему человеку")
+            except PageNotExistsError:
+                logger.error("Переход к следующему человеку")
                 continue  # пропускаем человека без ссылки
             try:
                 name, paragraph, final_url = self._get_info_about_person(original_url)
@@ -152,6 +163,10 @@ class WikiMonitorDaemon(Daemon):
                 self._save_to_json(success, name, href)
             except ParsingError as err:
                 logger.error(f"{err=}")
+            # except HTTPSConnectionPool as err:
+            #     logger.error(f"{err}")
+            #     continue
+        logger.info("Проверка списка завершена")
 
     def _get_info_about_person(self, original_url: str) -> tuple[str, str, str]:
         """Получает информацию о человеке"""
@@ -167,10 +182,9 @@ class WikiMonitorDaemon(Daemon):
             logger.info("Имя и параграф получены")
             return name, paragraph, final_url
 
-        except WikiServiceError as err:
+        except (WikiServiceError, AttributeError) as err:
             raise ParsingError(f"Ошибка парсинга HTML: {err}") from err
-        except AttributeError as err:
-            raise ParsingError(f"Ошибка парсинга HTML: {err}") from err
+
 
     def _save_to_json(self, success: bool, name: str, href: str):
         """Сохраняет нового человека в список при условии, что письмо на почту было отправлено"""
