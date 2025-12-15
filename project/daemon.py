@@ -169,6 +169,8 @@ class WikiMonitorDaemon(Daemon):
 
         except WikiServiceError as err:
             raise ParsingError(f"Ошибка парсинга HTML: {err}") from err
+        except AttributeError as err:
+            raise ParsingError(f"Ошибка парсинга HTML: {err}") from err
 
     def _save_to_json(self, success: bool, name: str, href: str):
         """Сохраняет нового человека в список при условии, что письмо на почту было отправлено"""
