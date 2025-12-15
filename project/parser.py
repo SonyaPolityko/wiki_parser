@@ -92,7 +92,6 @@ def _parse_next_p(first_p: BeautifulSoup):
 
 def _parse_paragraph(soup: BeautifulSoup):
     """Собираем текст в первом параграфе"""
-    paragraph = ""
     infobox = soup.find("table", class_=re.compile("infobox"))
     if infobox:
         first_p = infobox.find_next_sibling("p")
@@ -100,10 +99,10 @@ def _parse_paragraph(soup: BeautifulSoup):
             paragraph = first_p.get_text()
             if not paragraph:
                 paragraph = _parse_next_p(first_p)
+            return paragraph
     else:
         paragraph = soup.find("div", class_="mw-content-ltr mw-parser-output").find("p").get_text()
-
-    return paragraph
+        return paragraph
 
 
 def get_paragraph(text: str) -> str:

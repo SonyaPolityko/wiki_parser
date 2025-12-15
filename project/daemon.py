@@ -163,9 +163,9 @@ class WikiMonitorDaemon(Daemon):
                 self._save_to_json(success, name, href)
             except ParsingError as err:
                 logger.error(f"{err=}")
-            # except HTTPSConnectionPool as err:
-            #     logger.error(f"{err}")
-            #     continue
+            except Exception as err:
+                logger.error(f"{err}")
+                continue
         logger.info("Проверка списка завершена")
 
     def _get_info_about_person(self, original_url: str) -> tuple[str, str, str]:
