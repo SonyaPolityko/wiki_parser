@@ -35,10 +35,10 @@ PAGE_PATH = "wiki/Deaths_in_2025"
 ### 5. Запуск демона
 ```bash
 # Запуск
-python run_daemon.py start
+uv run run_daemon.py start
 
 # Остановка
-python run_daemon.py stop
+uv run run_daemon.py stop
 
 # Проверка запущенных процессов
 ps aux | grep daemon.py
