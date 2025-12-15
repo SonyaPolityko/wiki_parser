@@ -101,6 +101,7 @@ class Daemon:
             return
 
         self.kill_pid(pid)
+        logger.info('Демон остановлен')
 
     def kill_pid(self, pid: int):
         """Убиваем процесс"""
@@ -128,16 +129,24 @@ class WikiMonitorDaemon(Daemon):
         json_path = os.path.expanduser(f"~/.wiki_info/{filename}")  # сохранение в домашнем катологе пользователя
         os.makedirs(os.path.dirname(json_path), exist_ok=True)
         self.repo = WikiDataInitializer(JsonRepository(json_path))
-        if is_init:
+        self.is_init = is_init
+
+    def init_repository(self):
+        if self.is_init:  # инициализируем хранилище данными без отравки уведомлений
             self._save_all_people()
+        else:
+            logger.info('Начальная инициализация не установлена')
 
     def _save_all_people(self):
+        """Сохранение всех валидных ссылок в json"""
         try:
             self.repo.save_info()
+            logger.info("Хранилище инициализировано")
         except Exception as err:
             logger.error(f"{err}")
 
-    def check_new_people(self):
+    def process(self):
+        """Обработка списка и отправка сообщения"""
         logger.info("Проверка...")
         try:
             current_hrefs = get_list_href()
@@ -185,7 +194,6 @@ class WikiMonitorDaemon(Daemon):
         except (WikiServiceError, AttributeError) as err:
             raise ParsingError(f"Ошибка парсинга HTML: {err}") from err
 
-
     def _save_to_json(self, success: bool, name: str, href: str):
         """Сохраняет нового человека в список при условии, что письмо на почту было отправлено"""
         if success:
@@ -205,9 +213,10 @@ class WikiMonitorDaemon(Daemon):
         return success
 
     def run(self):
+        """Запуск логики"""
         logger.info("Демон запущен")
         while True:
-            self.check_new_people()
+            self.process()
             time.sleep(CHECK_INTERVAL)
 
 
